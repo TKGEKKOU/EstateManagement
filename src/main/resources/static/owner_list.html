@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>业主列表</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" href="css/main.css" media="all">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <!--导入ElementUI样式列表，css样式一般都在页面头部-->
+    <link rel="stylesheet" href="/css/index.css">
+</head>
+<body>
+<div class="x-nav">
+            <span class="layui-breadcrumb">
+              <a><cite>首页</cite></a>
+              <a><cite>业主信息管理</cite></a>
+              <a><cite>业主列表</cite></a>
+            </span>
+    <a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right"
+       href="javascript:location.replace(location.href);" title="刷新"><i class="layui-icon"
+                                                                          style="line-height:30px">ဂ</i></a>
+</div>
+<div class="x-body" id="app">
+    <div>
+        <span class="demonstration">时间范围</span>
+        <el-date-picker
+                v-model="selectDate"
+                type="daterange"
+                range-separator="--"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                :picker-options="pickerOptions">
+        </el-date-picker>
+        <span class="demonstration">搜索业主</span>
+        <el-input
+                placeholder="请输入业主姓名"
+                v-model="searchMap.name"
+                style="width: 16%"
+                clearable>
+        </el-input>
+        <el-button type="primary" plain>搜索</el-button>
+    </div>
+    <xblock>
+        <button class="layui-btn layui-btn-danger" onclick="delAll()"><i class="layui-icon">&#xe640;</i>批量删除
+        </button>
+        <button class="layui-btn" onclick="personnel_add('添加成员','personnel_add.html','1000','600')"><i
+                class="layui-icon">&#xe608;</i>添加
+        </button>
+        <!--        <span class="x-right" style="line-height:40px">共有数据：<span class="layui-badge">3</span> 条</span>-->
+    </xblock>
+    <table class="layui-table">
+        <thead>
+        <tr>
+            <th><input type="checkbox" name="" value=""></th>
+            <th>ID</th>
+            <th>小区ID</th>
+            <th>房产ID</th>
+            <th>姓名</th>
+            <!--            <th>身份证号</th>-->
+            <th>联系方式</th>
+            <!--            <th> 职业 </th>-->
+            <th>性别</th>
+            <th>出生日期</th>
+            <th>成员类型</th>
+            <!--            <th>备注</th>-->
+            <th>创建时间</th>
+            <th>
+                操作
+            </th>
+        </tr>
+        </thead>
+        <tbody id="x-img">
+        <tr v-for="(owner,index) in ownerList">
+            <td>
+                <input type="checkbox" value="1" name="">
+            </td>
+            <td>{{owner.id }}</td>
+            <!--            <td><u style="cursor:pointer" onclick="question_show()">-->
+            <!--                {{owner, communityId}}</u></td>-->
+            <td>
+                <u style="cursor: pointer" @click="show_community(owner,community)">
+                {{owner.communityId}}
+                </u>
+            </td>
+            <td>{{owner.houseId}}</td>
+
+            <td>
+                <u style="cursor:pointer" @click="question_show(owner)">
+                    {{ owner.name }}
+                </u>
+            </td>
+            <!--            <td> {{owner.idcard}}</td>-->
+            <td>{{owner.telephone}}</td>
+            <!--            <td>{{owner.profession}}</td>-->
+            <td>{{owner.sex}}</td>
+            <td>{{owner.birthday}}</td>
+            <td>{{owner.type}}</td>
+            <!--            <td>{{owner.remark}}</td>-->
+            <td>{{owner.createTime}}</td>
+            <td class="td-status"><span class="layui-btn layui-btn-normal " onclick="start(this,'2',0)"> 显示 </span>
+            </td>
+
+            <td class="td-manage">
+                <a title="编辑" href="javascript:;"
+                   onclick="personnel_edit('编辑','personnel_add.html','4','1000','600')" class="ml-5"
+                   style="text-decoration:none"><i class="layui-icon">&#xe642;</i></a>
+                <a title="删除" href="javascript:;" onclick="personnel_del(this,'4')" style="text-decoration:none"><i
+                        class="layui-icon">&#xe640;</i></a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <!--分页组件-->
+    <el-pagination
+            background
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :page-size="searchMap.pageSize"
+            layout="prev, pager, next,sizes"
+            :page-sizes="[10,20,30]"
+            style="text-align: center;"
+            :total="total">
+    </el-pagination>
+</div>
+<script src="lib/layui/layui.js" charset="utf-8"></script>
+<script src="js/x-layui.js" charset="utf-8"></script>
+<!--JS脚本-->
+<!--Vue JS脚本-->
+<script src="/js/vue.js" charset="utf-8"></script>
+<!--引入ElementUI组件库-->
+<script src="/js/index.js" charset="utf-8"></script>
+<!--引入Axios-->
+<script src="/js/axios.js" charset="utf-8"></script>
+<!--引入时间插件包-->
+<script src="/js/moment.min.js" charset="utf-8"></script>
+
+<!-- JavaScript 部分 -->
+<script>
+    var app = new Vue({
+        el: "#app",
+        data: {
+            ownerList: [],
+            searchMap: {"startTime": "", "endTime": "", "name": "", "pageNum": 1, "pageSize": 10},
+            total: 0,
+            selectDate: ['', ''],
+            pickerOptions: {
+                shortcuts: [{
+                    text: '最近一周',
+                    onClick(picker) {
+                        const end = new Date();
+                        const start = new Date();
+                        start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+                        picker.$emit('pick', [start, end]);
+                    }
+                }, {
+                    text: '最近一个月',
+                    onClick(picker) {
+                        const end = new Date();
+                        const start = new Date();
+                        start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+                        picker.$emit('pick', [start, end]);
+                    }
+                }, {
+                    text: '最近三个月',
+                    onClick(picker) {
+                        const end = new Date();
+                        const start = new Date();
+                        start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+                        picker.$emit('pick', [start, end]);
+                    }
+                }]
+            },
+        },
+        methods: {
+            /*分页条件查询*/
+            search() {
+                axios.post("/owner/search", this.searchMap).then((res) => {
+                    app.ownerList = res.data.data;
+                    app.total = res.data.total;
+                })
+            },
+            //批量删除提交
+            delAll() {
+                layer.confirm('确认要删除吗？', function (index) {
+                    layer.msg('删除成功', {icon: 1});
+                });
+            },
+            /*显示详情方法*/
+            question_show(owner) {
+                // 显示业主详细信息
+                layer.open({
+                    type: 1,
+                    title: '业主详细信息',
+                    area: ['600px', '400px'],
+                    content: `<div>
+                                <p>业主ID: ${owner.id}</p>
+                                <p>所属小区: ${owner.communityId}</p>
+                                <p>所属房产: ${owner.houseId}</p>
+                                <p>姓名: ${owner.name}</p>
+                                <p>身份证号: ${owner.idcard}</p>
+                                <p>联系方式: ${owner.telephone}</p>
+                                <p>职业: ${owner.profession}</p>
+                                <p>性别: ${owner.sex}</p>
+                                <p>出生日期: ${owner.birthday}</p>
+                                <p>成员类型: ${owner.type}</p>
+                                <p>备注: ${owner.remark}</p>
+                                <p>创建时间: ${owner.createTime}</p>
+                              </div>`
+                });
+            },
+            show_community(owner, community) {
+                // 显示小区详细信息
+                layer.open({
+                    type: 1,
+                    title: '小区详细信息',
+                    area: ['600px', '400px'],
+                    content: `<div>
+        <p>小区名称: ${community.name}</p>
+        <p>小区地址: ${community.address}</p>
+        <p>开发商: ${community.developer}</p>
+        <p>物业公司: ${community.estateCompany}</p>
+        <p>绿化率: ${community.greeningRate}%</p>
+        <p>总栋数: ${community.totalBuildings}栋</p>
+        <p>总户数:${community.totalHouseholds}户</p>
+                              </div>`
+                });
+            },
+            /*添加*/
+            personnel_add(title, url, w, h) {
+                x_admin_show(title, url, w, h);
+            },
+            //编辑
+            personnel_edit(title, url, id, w, h) {
+                url = url + "?id=" + id;
+                x_admin_show(title, url, w, h);
+            },
+            /*删除*/
+            personnel_del(obj, id) {
+                layer.confirm('确认要删除吗？', {icon: 3, title: '提示信息'}, function (index) {
+                    $.ajax({
+                        type: "post",
+                        url: "xxx",
+                        data: {id: id},
+                        dataType: "json",
+                        success: function (data) {
+                            if (data.status == 1) {
+                                $(obj).parents("tr").remove();
+                                layer.msg(data.info, {icon: 6, time: 1000});
+                                setTimeout(function () {
+                                    window.location.reload();
+                                }, 1000);
+                            } else {
+                                layer.msg(data.info, {icon: 5, time: 1000});
+                            }
+                        }
+                    });
+                });
+            },
+            /*弹出层*/
+            x_admin_show(title, url, w, h) {
+                if (title == null || title === '') {
+                    title = false;
+                }
+                ;
+                if (url == null || url === '') {
+                    url = "404.html";
+                }
+                ;
+                if (w == null || w === '') {
+                    w = 800;
+                }
+                ;
+                if (h == null || h === '') {
+                    h = ($(window).height() - 50);
+                }
+                ;
+
+                layer.open({
+                    type: 2,
+                    area: [w + 'px', h + 'px'],
+                    fix: false,
+                    maxmin: true,
+                    shadeClose: true,
+                    shade: 0.4,
+                    title: title,
+                    content: url
+                });
+            },
+            /*关闭弹出框口*/
+            x_admin_close() {
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+            }
+        },
+        created: function () {
+            layui.use(['laydate', 'element', 'laypage', 'layer'], function () {
+                $ = layui.jquery;
+                layer = layui.layer;
+                okLoading.close($);
+                layer.ready(function () {
+                    layer.photos({
+                        photos: '#x-img'
+                    });
+                });
+            });
+            //获取小区列表信息
+            this.search();
+        }
+    });
+</script>
+</body>
+</html>
