@@ -2,9 +2,9 @@ package com.gsy.estatemanagement.service.impl;
 
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
-import com.gsy.estatemanagement.dao.HouseMapper;
-import com.gsy.estatemanagement.domain.House;
-import com.gsy.estatemanagement.service.HouseService;
+import com.gsy.estatemanagement.dao.CarMapper;
+import com.gsy.estatemanagement.domain.Car;
+import com.gsy.estatemanagement.service.CarService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tk.mybatis.mapper.entity.Example;
@@ -14,32 +14,29 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class HouseServiceImpl implements HouseService {
-
+public class CarServiceImpl implements CarService {
     @Autowired
-    private HouseMapper houseMapper;
+    private CarMapper carMapper;
+    
     @Override
-    public List<House> getAllHouse() {
-        return houseMapper.selectAll();
+    public List<Car> getAllCars() {
+        return carMapper.selectAll();
     }
 
     @Override
-    public Page<House> searchHouse(Map searchMap) {
+    public Page<Car> searchCars(Map searchMap) {
         int pageNum = 1;
-        int pageSize = 10;
-        Example example = new Example(House.class);
+        int pageSize = 2;
+        Example example = new Example(Car.class);
         Example.Criteria criteria = example.createCriteria();
-
         if (searchMap != null) {
-            // 使用 liveTime 字段进行时间范围查询
             Object startTime = searchMap.get("startTime");
-            if (startTime != null && !startTime.toString().isEmpty()) {
-                criteria.andGreaterThanOrEqualTo("liveTime", startTime);
+            if (startTime != null && !startTime.equals("")) {
+                criteria.andGreaterThanOrEqualTo("createTime", String.valueOf(startTime));
             }
-
             Object endTime = searchMap.get("endTime");
-            if (endTime != null && !endTime.toString().isEmpty()) {
-                criteria.andLessThanOrEqualTo("liveTime", endTime);
+            if (endTime != null && !endTime.equals("")) {
+                criteria.andLessThanOrEqualTo("createTime", String.valueOf(endTime));
             }
 
             /* 名称模糊搜索 */
@@ -63,10 +60,8 @@ public class HouseServiceImpl implements HouseService {
                 pageSize = Integer.parseInt((String) pageSizeObj);
             }
         }
-
         // 使用PageHelper插件完成分页
         PageHelper.startPage(pageNum, pageSize);
-        Page<House> houses = (Page<House>) houseMapper.selectByExample(example);
-        return houses;
+        return (Page<Car>) carMapper.selectByExample(example);
     }
 }

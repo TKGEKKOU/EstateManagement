@@ -1,25 +1,30 @@
 package com.gsy.estatemanagement.controller;
 
+
 import com.github.pagehelper.Page;
 import com.gsy.estatemanagement.common.PageResult;
 import com.gsy.estatemanagement.common.Result;
-import com.gsy.estatemanagement.domain.Building;
-import com.gsy.estatemanagement.service.BuildingService;
+import com.gsy.estatemanagement.domain.Car;
+import com.gsy.estatemanagement.service.CarService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/building")
-public class BuildingController {
+@RequestMapping("/car")
+public class CarController {
     @Autowired
-    private BuildingService buildingService;
+    private CarService carService;
+
     @RequestMapping("/find")
     public Result find() {
-        List<Building> allBuildings = buildingService.getAllBuildings();
-        return new Result(false, 200, "成功！", allBuildings);
+        List<Car> allCars = carService.getAllCars();
+        return new Result(false, 200, "成功！", allCars);
     }
     /**
      * @param searchMap
@@ -29,7 +34,7 @@ public class BuildingController {
      */
     @PostMapping("/search")
     public PageResult search(@RequestBody Map searchMap) {
-        Page<Building> page = buildingService.searchBuilding(searchMap);
+        Page<Car> page = carService.searchCars(searchMap);
         return new PageResult(false, 200, "查询成功！", page.getResult(), page.getTotal());
     }
 }
